@@ -1,30 +1,22 @@
 package com.genersoft.iot.vmp.gb28181.transmit.cmd.impl;
 
-import java.text.ParseException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.sip.ClientTransaction;
-import javax.sip.Dialog;
-import javax.sip.InvalidArgumentException;
-import javax.sip.SipException;
-import javax.sip.SipFactory;
-import javax.sip.SipProvider;
-import javax.sip.TransactionDoesNotExistException;
-import javax.sip.address.SipURI;
-import javax.sip.header.ViaHeader;
-import javax.sip.message.Request;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
-
 import com.genersoft.iot.vmp.conf.SipConfig;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.gb28181.session.VideoStreamSessionManager;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.ISIPCommander;
 import com.genersoft.iot.vmp.gb28181.transmit.cmd.SIPRequestHeaderProvider;
 import com.genersoft.iot.vmp.gb28181.utils.DateUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+import javax.sip.*;
+import javax.sip.address.SipURI;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.Request;
+import java.text.ParseException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**    
  * @Description:设备能力接口，用于定义设备的控制、查询能力   
@@ -271,6 +263,54 @@ public class SIPCommander implements ISIPCommander {
 	
 	        ClientTransaction transaction = transmitRequest(device, request);
 	        streamSession.put(ssrc, transaction);
+			return ssrc;
+		} catch ( SipException | ParseException | InvalidArgumentException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * 请求回放视频流
+	 *
+	 * @param device  视频设备
+	 * @param channelId  预览通道
+	 * @param startTime 开始时间,格式要求：yyyy-MM-dd HH:mm:ss
+	 * @param endTime 结束时间,格式要求：yyyy-MM-dd HH:mm:ss
+	 */
+	@Override
+	public String downloadBackStreamCmd(Device device, String channelId, String startTime, String endTime) {
+		try {
+
+			String ssrc = streamSession.createPlayBackSsrc();
+			//
+			StringBuffer content = new StringBuffer(200);
+			content.append("v=0\r\n");
+			content.append("o="+sipConfig.getSipId()+" 0 0 IN IP4 "+sipConfig.getSipIp()+"\r\n");
+			content.append("s=Download\r\n");
+			content.append("u="+channelId+":3\r\n");
+			content.append("c=IN IP4 "+sipConfig.getMediaIp()+"\r\n");
+			content.append("t="+DateUtil.yyyy_MM_dd_HH_mm_ssToTimestamp(startTime)+" "+DateUtil.yyyy_MM_dd_HH_mm_ssToTimestamp(endTime) +"\r\n");
+			if(device.getTransport().equals("TCP")) {
+				content.append("m=video "+sipConfig.getMediaPort()+" TCP/RTP/AVP 96 98 97\r\n");
+			}
+			if(device.getTransport().equals("UDP")) {
+				content.append("m=video "+sipConfig.getMediaPort()+" RTP/AVP 96 98 97\r\n");
+			}
+			content.append("a=recvonly\r\n");
+			content.append("a=rtpmap:96 PS/90000\r\n");
+			content.append("a=rtpmap:98 H264/90000\r\n");
+			content.append("a=rtpmap:97 MPEG4/90000\r\n");
+			if(device.getTransport().equals("TCP")){
+				content.append("a=setup:passive\r\n");
+				content.append("a=connection:new\r\n");
+			}
+			content.append("a=downloadspeed:4\r\n");
+
+			Request request = headerProvider.createPlaybackInviteRequest(device, channelId, content.toString(), null, "Download", null);
+
+			ClientTransaction transaction = transmitRequest(device, request);
+			streamSession.put(ssrc, transaction);
 			return ssrc;
 		} catch ( SipException | ParseException | InvalidArgumentException e) {
 			e.printStackTrace();

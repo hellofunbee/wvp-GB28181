@@ -80,7 +80,18 @@ public interface ISIPCommander {
 	 * @param endTime 结束时间,格式要求：yyyy-MM-dd HH:mm:ss
 	 */
 	public String playbackStreamCmd(Device device,String channelId, String startTime, String endTime);
-	
+
+	/**
+	 * 请求下载回放视频流
+	 *
+	 * @param device  视频设备
+	 * @param channelId  预览通道
+	 * @param startTime 开始时间,格式要求：yyyy-MM-dd HH:mm:ss
+	 * @param endTime 结束时间,格式要求：yyyy-MM-dd HH:mm:ss
+	 */
+	public String downloadBackStreamCmd(Device device,String channelId, String startTime, String endTime);
+
+
 	/**
 	 * 视频流停止
 	 * 
