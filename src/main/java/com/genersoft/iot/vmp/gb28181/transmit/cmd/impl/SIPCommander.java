@@ -263,6 +263,19 @@ public class SIPCommander implements ISIPCommander {
 	
 	        ClientTransaction transaction = transmitRequest(device, request);
 	        streamSession.put(ssrc, transaction);
+	        new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						Thread.sleep(5000);
+						ClientTransaction cmd = speedBackStreamCmd(device, channelId, ssrc, "4");
+						System.out.println("休息五秒，启动4倍播放");
+						System.out.println(cmd.toString());
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}).start();
 			return ssrc;
 		} catch ( SipException | ParseException | InvalidArgumentException e) {
 			e.printStackTrace();
@@ -317,7 +330,37 @@ public class SIPCommander implements ISIPCommander {
 			return null;
 		}
 	}
-	
+
+	/**
+	 * 请求回放视频流
+	 *
+	 * @param device  视频设备
+	 * @param channelId  预览通道
+	 * @param ssrc
+	 * @param scale
+	 */
+	public ClientTransaction speedBackStreamCmd(Device device, String channelId, String ssrc,String scale) {
+		try {
+
+			//
+			StringBuffer content = new StringBuffer(200);
+
+			content.append("PALY MANSRTSP/1.0" + "\r\n");
+			content.append("CSeq: 2" + "\r\n");
+			content.append("Scal: "+scale + "\r\n");
+			content.append("Range: npt=now-" + "\r\n");
+
+			Request request = headerProvider.createPlaybackInviteRequest(device, channelId, content.toString(), null, "Download", null);
+			ClientTransaction transaction = transmitRequest(device, request);
+			return transaction;
+		} catch ( SipException | ParseException | InvalidArgumentException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+
+
 	/**
 	 * 视频流停止
 	 * 
