@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import javax.sip.*;
 import javax.sip.address.SipURI;
+import javax.sip.header.ContentTypeHeader;
 import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import java.text.ParseException;
@@ -42,6 +43,9 @@ public class SIPCommander implements ISIPCommander {
 	@Autowired
 	@Qualifier(value="udpSipProvider")
 	private SipProvider udpSipProvider;
+
+	@Autowired
+	private SipFactory sipFactory;
 	
 	/**
 	 * 云台方向放控制，使用配置文件中的默认镜头移动速度
@@ -339,8 +343,53 @@ public class SIPCommander implements ISIPCommander {
 	 * @param ssrc
 	 * @param scale
 	 */
-	public ClientTransaction speedBackStreamCmd(Device device, String channelId, String ssrc,String scale) {
+	public void speedBackStreamCmd(Device device, String channelId, String ssrc,String scale) {
+		StringBuffer content = new StringBuffer(200);
+
+		content.append("PALY MANSRTSP/1.0" + "\r\n");
+		content.append("CSeq: 2" + "\r\n");
+		content.append("Scal: "+scale + "\r\n");
+		content.append("Range: npt=now-" + "\r\n");
+
 		try {
+			ClientTransaction transaction = streamSession.get(ssrc);
+			if (transaction == null) {
+				return;
+			}
+
+			Dialog dialog = transaction.getDialog();
+			if (dialog == null) {
+				return;
+			}
+			Request byeRequest = dialog.createRequest(Request.INFO);
+			byeRequest.removeContent();
+			ContentTypeHeader contentTypeHeader = sipFactory.createHeaderFactory().createContentTypeHeader("Application", "MANSRTSP");
+			byeRequest.setContent(content,contentTypeHeader);
+
+			SipURI byeURI = (SipURI) byeRequest.getRequestURI();
+			String vh = transaction.getRequest().getHeader(ViaHeader.NAME).toString();
+			Pattern p = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)\\:(\\d+)");
+			Matcher matcher = p.matcher(vh);
+			if (matcher.find()) {
+				byeURI.setHost(matcher.group(1));
+			}
+			ViaHeader viaHeader = (ViaHeader) byeRequest.getHeader(ViaHeader.NAME);
+			String protocol = viaHeader.getTransport().toUpperCase();
+			ClientTransaction clientTransaction = null;
+			if("TCP".equals(protocol)) {
+				clientTransaction = tcpSipProvider.getNewClientTransaction(byeRequest);
+			} else if("UDP".equals(protocol)) {
+				clientTransaction = udpSipProvider.getNewClientTransaction(byeRequest);
+			}
+			dialog.sendRequest(clientTransaction);
+		} catch (TransactionDoesNotExistException e) {
+			e.printStackTrace();
+		} catch (SipException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		/*try {
 
 			//
 			StringBuffer content = new StringBuffer(200);
@@ -352,11 +401,9 @@ public class SIPCommander implements ISIPCommander {
 
 			Request request = headerProvider.createPlaybackInviteRequest(device, channelId, content.toString(), null, "Download", null);
 			ClientTransaction transaction = transmitRequest(device, request);
-			return transaction;
 		} catch ( SipException | ParseException | InvalidArgumentException e) {
 			e.printStackTrace();
-			return null;
-		}
+		}*/
 	}
 
 
