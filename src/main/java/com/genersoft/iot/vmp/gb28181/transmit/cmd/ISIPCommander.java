@@ -91,6 +91,21 @@ public interface ISIPCommander {
 	 */
 	public String downloadBackStreamCmd(Device device,String channelId, String startTime, String endTime);
 
+	/**
+	 * 控制回放视频流播放速度
+	 *
+	 * @param ssrc  媒体流的ssrc
+	 * @param scale  倍速 0.25、0.5、1、2、4
+	 */
+	public void speedBackStreamCmd(String ssrc,String scale);
+
+	/**
+	 * 暂停播放回放命令
+	 *
+	 * @param ssrc  媒体流的ssrc
+	 * @param isPause  1：暂停 2：播放
+	 */
+	public void pauseBackStreamCmd(String ssrc,String isPause);
 
 	/**
 	 * 视频流停止

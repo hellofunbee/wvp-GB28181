@@ -11,13 +11,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.sip.*;
-import javax.sip.address.Address;
 import javax.sip.address.SipURI;
-import javax.sip.address.URI;
-import javax.sip.header.*;
+import javax.sip.header.ContentTypeHeader;
+import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -337,9 +335,12 @@ public class SIPCommander implements ISIPCommander {
 	}
 
 	/**
-	 * 请求回放视频流
+	 * 控制回放视频流播放速度
 	 *
+	 * @param ssrc  媒体流的ssrc
+	 * @param scale  倍速 0.25、0.5、1、2、4
 	 */
+	@Override
 	public void speedBackStreamCmd(String ssrc,String scale) {
 		StringBuffer content = new StringBuffer();
 		content.append("PLAY MANSRTSP/1.0" + "\r\n");
@@ -355,11 +356,7 @@ public class SIPCommander implements ISIPCommander {
 			if (dialog == null) {
 				return;
 			}
-
 			Request byeRequest = dialog.createRequest(Request.INFO);
-			Request byeRequest2 = transaction.getRequest();
-
-
 			SipURI byeURI = (SipURI) byeRequest.getRequestURI();
 			String vh = transaction.getRequest().getHeader(ViaHeader.NAME).toString();
 			Pattern p = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)\\:(\\d+)");
@@ -387,7 +384,71 @@ public class SIPCommander implements ISIPCommander {
 		}
 	}
 
+	/**
+	 * 暂停播放回放命令
+	 *
+	 * @param ssrc  媒体流的ssrc
+	 * @param isPause  1：暂停 2：播放
+	 */
+	@Override
+	public void pauseBackStreamCmd(String ssrc, String isPause) {
+		StringBuffer content = new StringBuffer();
+		//播放
+		/***
+		 * PLAYRTSP/1.0
+		 * CSeq:2
+		 * Range:npt=now-
+		 */
+		if("2".equals(isPause)){
+			content.append("PLAY RTSP/1.0" + "\r\n");
+			content.append("CSeq: 2 INFO" + "\r\n");
+			content.append("Range: npt=now-" + "\r\n");
+		}else {
+			/****
+			 * PAUSE RTSP/1.0
+			 * CSeq:1
+			 * PauseTime:now
+			 */
+			content.append("PAUSE RTSP/1.0" + "\r\n");
+			content.append("CSeq: 1 INFO" + "\r\n");
+			content.append("PauseTime: now" + "\r\n");
+		}
+		try {
+			ClientTransaction transaction = streamSession.get(ssrc);
+			if (transaction == null) {
+				return;
+			}
+			Dialog dialog = transaction.getDialog();
+			if (dialog == null) {
+				return;
+			}
+			Request byeRequest = dialog.createRequest(Request.INFO);
+			SipURI byeURI = (SipURI) byeRequest.getRequestURI();
+			String vh = transaction.getRequest().getHeader(ViaHeader.NAME).toString();
+			Pattern p = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)\\:(\\d+)");
+			Matcher matcher = p.matcher(vh);
+			if (matcher.find()) {
+				byeURI.setHost(matcher.group(1));
+			}
+			ViaHeader viaHeader = (ViaHeader) byeRequest.getHeader(ViaHeader.NAME);
 
+			String protocol = viaHeader.getTransport().toUpperCase();
+			ClientTransaction clientTransaction = null;
+			if("TCP".equals(protocol)) {
+				clientTransaction = tcpSipProvider.getNewClientTransaction(byeRequest);
+			} else if("UDP".equals(protocol)) {
+				clientTransaction = udpSipProvider.getNewClientTransaction(byeRequest);
+			}
+			ContentTypeHeader contentTypeHeader = sipFactory.createHeaderFactory().createContentTypeHeader("Application", "MANSRTSP");
+
+			byeRequest.setContent(content.toString(),contentTypeHeader);
+			dialog.sendRequest(clientTransaction);
+		} catch (SipException e) {
+			e.printStackTrace();
+		} catch (ParseException  e) {
+			e.printStackTrace();
+		}
+	}
 
 	/**
 	 * 视频流停止
