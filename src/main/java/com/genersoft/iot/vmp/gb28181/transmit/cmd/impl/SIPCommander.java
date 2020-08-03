@@ -360,11 +360,8 @@ public class SIPCommander implements ISIPCommander {
 				return;
 			}
 
-//			Request request = headerProvider.createSpeedPlaybackRequest(transaction, device, channelId, content.toString(), null, null, null);
-//			ClientTransaction newTransaction = transmitRequest(device, request);
-//			Request byeRequest = dialog.createRequest(Request.INFO);
-
-			Request byeRequest = transaction.getRequest();
+			Request byeRequest = dialog.createRequest(Request.INFO);
+//			Request byeRequest = transaction.getRequest();
 			byeRequest.setMethod(Request.INFO);
 			byeRequest.removeContent();
 			ContentTypeHeader contentTypeHeader = sipFactory.createHeaderFactory().createContentTypeHeader("Application", "MANSRTSP");
@@ -385,30 +382,15 @@ public class SIPCommander implements ISIPCommander {
 			} else if("UDP".equals(protocol)) {
 				clientTransaction = udpSipProvider.getNewClientTransaction(byeRequest);
 			}
+			System.out.println("请求前的request： " + byeRequest.toString());
 			dialog.sendRequest(clientTransaction);
-			//创建request
 
-
+			System.out.println("请求后的request： " + byeRequest.toString());
 		} catch (SipException e) {
 			e.printStackTrace();
 		} catch (ParseException  e) {
 			e.printStackTrace();
 		}
-		/*try {
-
-			//
-			StringBuffer content = new StringBuffer(200);
-
-			content.append("PALY MANSRTSP/1.0" + "\r\n");
-			content.append("CSeq: 2" + "\r\n");
-			content.append("Scal: "+scale + "\r\n");
-			content.append("Range: npt=now-" + "\r\n");
-
-			Request request = headerProvider.createPlaybackInviteRequest(device, channelId, content.toString(), null, "Download", null);
-			ClientTransaction transaction = transmitRequest(device, request);
-		} catch ( SipException | ParseException | InvalidArgumentException e) {
-			e.printStackTrace();
-		}*/
 	}
 
 
