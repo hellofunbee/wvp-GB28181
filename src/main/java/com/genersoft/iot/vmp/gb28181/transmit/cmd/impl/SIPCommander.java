@@ -54,7 +54,6 @@ public class SIPCommander implements ISIPCommander {
 	 * @param channelId  预览通道
 	 * @param leftRight  镜头左移右移 0:停止 1:左移 2:右移
      * @param upDown     镜头上移下移 0:停止 1:上移 2:下移
-     * @param moveSpeed  镜头移动速度
 	 */
 	@Override
 	public boolean ptzdirectCmd(Device device, String channelId, int leftRight, int upDown) {
@@ -271,10 +270,9 @@ public class SIPCommander implements ISIPCommander {
 				@Override
 				public void run() {
 					try {
-						Thread.sleep(5000);
-						ClientTransaction cmd = speedBackStreamCmd(device, channelId, ssrc, "4");
-						System.out.println("休息五秒，启动4倍播放");
-						System.out.println(cmd.toString());
+						Thread.sleep(10000);
+						speedBackStreamCmd(device, channelId, ssrc, "8");
+						System.out.println("休息10秒，启动8倍播放");
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -361,7 +359,13 @@ public class SIPCommander implements ISIPCommander {
 			if (dialog == null) {
 				return;
 			}
-			Request byeRequest = dialog.createRequest(Request.INFO);
+
+//			Request request = headerProvider.createSpeedPlaybackRequest(transaction, device, channelId, content.toString(), null, null, null);
+//			ClientTransaction newTransaction = transmitRequest(device, request);
+//			Request byeRequest = dialog.createRequest(Request.INFO);
+
+			Request byeRequest = transaction.getRequest();
+			byeRequest.setMethod(Request.INFO);
 			byeRequest.removeContent();
 			ContentTypeHeader contentTypeHeader = sipFactory.createHeaderFactory().createContentTypeHeader("Application", "MANSRTSP");
 			byeRequest.setContent(content,contentTypeHeader);
@@ -382,11 +386,12 @@ public class SIPCommander implements ISIPCommander {
 				clientTransaction = udpSipProvider.getNewClientTransaction(byeRequest);
 			}
 			dialog.sendRequest(clientTransaction);
-		} catch (TransactionDoesNotExistException e) {
-			e.printStackTrace();
+			//创建request
+
+
 		} catch (SipException e) {
 			e.printStackTrace();
-		} catch (ParseException e) {
+		} catch (ParseException  e) {
 			e.printStackTrace();
 		}
 		/*try {
@@ -410,9 +415,6 @@ public class SIPCommander implements ISIPCommander {
 
 	/**
 	 * 视频流停止
-	 * 
-	 * @param device  视频设备
-	 * @param channelId  预览通道
 	 */
 	@Override
 	public void streamByeCmd(String ssrc) {
