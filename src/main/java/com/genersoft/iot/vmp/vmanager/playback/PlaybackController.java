@@ -105,7 +105,7 @@ public class PlaybackController {
 	 */
 	@PostMapping("/playback/{ssrc}/{isPause}/pause")
 	public ResponseEntity<String> playPause(@PathVariable String ssrc, @PathVariable String isPause) {
-		cmder.speedBackStreamCmd(ssrc, isPause);
+		cmder.pauseBackStreamCmd(ssrc, isPause);
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("设备录像回放暂停/播放 API调用，ssrc：%s", ssrc));
 		}
