@@ -300,7 +300,7 @@ public class SIPCommander implements ISIPCommander {
 
 			String ssrc = streamSession.createPlayBackSsrc();
 			//
-			StringBuffer content = new StringBuffer(200);
+			StringBuffer content = new StringBuffer();
 			content.append("v=0\r\n");
 			content.append("o="+sipConfig.getSipId()+" 0 0 IN IP4 "+sipConfig.getSipIp()+"\r\n");
 			content.append("s=Download\r\n");
@@ -326,7 +326,8 @@ public class SIPCommander implements ISIPCommander {
 			Request request = headerProvider.createPlaybackInviteRequest(device, channelId, content.toString(), null, "Download", null);
 
 			ClientTransaction transaction = transmitRequest(device, request);
-			streamSession.put(ssrc, transaction);
+			System.out.println(transaction.getState().toString());
+//			streamSession.put(ssrc, transaction);
 			return ssrc;
 		} catch ( SipException | ParseException | InvalidArgumentException e) {
 			e.printStackTrace();

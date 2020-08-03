@@ -119,5 +119,35 @@ public class PlaybackController {
 		}
 	}
 
+    @GetMapping("/playback/{deviceId}/{channelId}/download")
+    public ResponseEntity<String> downloadBackStreamCmd(@PathVariable String deviceId, @PathVariable String channelId, String startTime, String endTime) {
+
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("设备回放下载 API调用，deviceId：%s ，channelId：%s", deviceId, channelId));
+        }
+
+        if (StringUtils.isEmpty(deviceId) || StringUtils.isEmpty(channelId)) {
+            String log = String.format("设备回放下载 API调用失败，deviceId：%s ，channelId：%s", deviceId, channelId);
+            logger.warn(log);
+            return new ResponseEntity<String>(log, HttpStatus.BAD_REQUEST);
+        }
+
+        Device device = storager.queryVideoDevice(deviceId);
+        String ssrc = cmder.downloadBackStreamCmd(device, channelId, startTime, endTime);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("设备回放下载 API调用，ssrc：" + ssrc + ",ZLMedia streamId:" + Integer.toHexString(Integer.parseInt(ssrc)));
+        }
+
+        if (ssrc != null) {
+            JSONObject json = new JSONObject();
+            json.put("ssrc", ssrc);
+            return new ResponseEntity<String>(json.toString(), HttpStatus.OK);
+        } else {
+            logger.warn("设备回放下载API调用失败！");
+            return new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
 }
