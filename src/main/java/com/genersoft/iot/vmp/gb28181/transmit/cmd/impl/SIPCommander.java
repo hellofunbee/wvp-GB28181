@@ -304,7 +304,7 @@ public class SIPCommander implements ISIPCommander {
 			content.append("v=0\r\n");
 			content.append("o="+sipConfig.getSipId()+" 0 0 IN IP4 "+sipConfig.getSipIp()+"\r\n");
 			content.append("s=Download\r\n");
-			content.append("u="+channelId+":3\r\n");
+			content.append("u="+channelId+":0\r\n");
 			content.append("c=IN IP4 "+sipConfig.getMediaIp()+"\r\n");
 			content.append("t="+DateUtil.yyyy_MM_dd_HH_mm_ssToTimestamp(startTime)+" "+DateUtil.yyyy_MM_dd_HH_mm_ssToTimestamp(endTime) +"\r\n");
 			if(device.getTransport().equals("TCP")) {
@@ -322,11 +322,11 @@ public class SIPCommander implements ISIPCommander {
 				content.append("a=connection:new\r\n");
 			}
 			content.append("a=downloadspeed:4\r\n");
-
+			content.append("y="+ssrc+"\r\n");//ssrc
+			content.append("f=v/MPEG-4"+"\r\n");//ssrc
 			Request request = headerProvider.createPlaybackInviteRequest(device, channelId, content.toString(), null, "Download", null);
-
 			ClientTransaction transaction = transmitRequest(device, request);
-			System.out.println(transaction.getState().toString());
+			System.out.println(request.toString());
 //			streamSession.put(ssrc, transaction);
 			return ssrc;
 		} catch ( SipException | ParseException | InvalidArgumentException e) {
