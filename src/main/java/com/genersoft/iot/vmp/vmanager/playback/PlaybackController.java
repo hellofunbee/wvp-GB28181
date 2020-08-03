@@ -79,4 +79,24 @@ public class PlaybackController {
 			return new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+	/**
+	  播放速度 TODO 校验 num
+	      */
+	@PostMapping("/playback/{ssrc}/{num}/speed")
+	public ResponseEntity<String> playSpeed(@PathVariable String ssrc,@PathVariable String num){
+		cmder.speedBackStreamCmd(ssrc,num);
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("设备录像回放控制速度 API调用，ssrc：%s", ssrc));
+		}
+		if(ssrc!=null) {
+			JSONObject json = new JSONObject();
+			json.put("ssrc", ssrc);
+			return new ResponseEntity<String>(json.toString(),HttpStatus.OK);
+		} else {
+			logger.warn("设备录像回放速度API调用失败！");
+			return new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+
 }

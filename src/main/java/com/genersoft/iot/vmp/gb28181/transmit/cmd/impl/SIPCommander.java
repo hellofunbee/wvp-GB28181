@@ -11,11 +11,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.sip.*;
+import javax.sip.address.Address;
 import javax.sip.address.SipURI;
-import javax.sip.header.ContentTypeHeader;
-import javax.sip.header.ViaHeader;
+import javax.sip.address.URI;
+import javax.sip.header.*;
 import javax.sip.message.Request;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -261,23 +263,24 @@ public class SIPCommander implements ISIPCommander {
 	             content.append("a=connection:new\r\n");
 	        }
 	        content.append("y="+ssrc+"\r\n");//ssrc
-	        
+
 	        Request request = headerProvider.createPlaybackInviteRequest(device, channelId, content.toString(), null, "playback", null);
 	
 	        ClientTransaction transaction = transmitRequest(device, request);
 	        streamSession.put(ssrc, transaction);
-	        new Thread(new Runnable() {
+			System.out.println("请求回放数据："+request.toString());
+	        /*new Thread(new Runnable() {
 				@Override
 				public void run() {
 					try {
 						Thread.sleep(10000);
-						speedBackStreamCmd(device, channelId, ssrc, "8");
+						speedBackStreamCmd(ssrc, "4");
 						System.out.println("休息10秒，启动8倍播放");
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
 				}
-			}).start();
+			}).start();*/
 			return ssrc;
 		} catch ( SipException | ParseException | InvalidArgumentException e) {
 			e.printStackTrace();
@@ -336,36 +339,26 @@ public class SIPCommander implements ISIPCommander {
 	/**
 	 * 请求回放视频流
 	 *
-	 * @param device  视频设备
-	 * @param channelId  预览通道
-	 * @param ssrc
-	 * @param scale
 	 */
-	public void speedBackStreamCmd(Device device, String channelId, String ssrc,String scale) {
-		StringBuffer content = new StringBuffer(200);
-
-		content.append("PALY MANSRTSP/1.0" + "\r\n");
-		content.append("CSeq: 2" + "\r\n");
-		content.append("Scal: "+scale + "\r\n");
-		content.append("Range: npt=now-" + "\r\n");
-
+	public void speedBackStreamCmd(String ssrc,String scale) {
+		StringBuffer content = new StringBuffer();
+		content.append("PLAY MANSRTSP/1.0" + "\r\n");
+		content.append("CSeq: 2 INFO" + "\r\n");
+		content.append("Scale: "+scale + "\r\n");
+//		content.append("Range: npt=now-" + "\r\n");
 		try {
 			ClientTransaction transaction = streamSession.get(ssrc);
 			if (transaction == null) {
 				return;
 			}
-
 			Dialog dialog = transaction.getDialog();
 			if (dialog == null) {
 				return;
 			}
 
 			Request byeRequest = dialog.createRequest(Request.INFO);
-//			Request byeRequest = transaction.getRequest();
-			byeRequest.setMethod(Request.INFO);
-			byeRequest.removeContent();
-			ContentTypeHeader contentTypeHeader = sipFactory.createHeaderFactory().createContentTypeHeader("Application", "MANSRTSP");
-			byeRequest.setContent(content,contentTypeHeader);
+			Request byeRequest2 = transaction.getRequest();
+
 
 			SipURI byeURI = (SipURI) byeRequest.getRequestURI();
 			String vh = transaction.getRequest().getHeader(ViaHeader.NAME).toString();
@@ -375,6 +368,7 @@ public class SIPCommander implements ISIPCommander {
 				byeURI.setHost(matcher.group(1));
 			}
 			ViaHeader viaHeader = (ViaHeader) byeRequest.getHeader(ViaHeader.NAME);
+
 			String protocol = viaHeader.getTransport().toUpperCase();
 			ClientTransaction clientTransaction = null;
 			if("TCP".equals(protocol)) {
@@ -382,10 +376,10 @@ public class SIPCommander implements ISIPCommander {
 			} else if("UDP".equals(protocol)) {
 				clientTransaction = udpSipProvider.getNewClientTransaction(byeRequest);
 			}
-			System.out.println("请求前的request： " + byeRequest.toString());
-			dialog.sendRequest(clientTransaction);
+			ContentTypeHeader contentTypeHeader = sipFactory.createHeaderFactory().createContentTypeHeader("Application", "MANSRTSP");
 
-			System.out.println("请求后的request： " + byeRequest.toString());
+			byeRequest.setContent(content.toString(),contentTypeHeader);
+			dialog.sendRequest(clientTransaction);
 		} catch (SipException e) {
 			e.printStackTrace();
 		} catch (ParseException  e) {
