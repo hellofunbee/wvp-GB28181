@@ -266,19 +266,6 @@ public class SIPCommander implements ISIPCommander {
 	
 	        ClientTransaction transaction = transmitRequest(device, request);
 	        streamSession.put(ssrc, transaction);
-			System.out.println("请求回放数据："+request.toString());
-	        /*new Thread(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						Thread.sleep(10000);
-						speedBackStreamCmd(ssrc, "4");
-						System.out.println("休息10秒，启动8倍播放");
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-			}).start();*/
 			return ssrc;
 		} catch ( SipException | ParseException | InvalidArgumentException e) {
 			e.printStackTrace();
@@ -321,13 +308,13 @@ public class SIPCommander implements ISIPCommander {
 				content.append("a=setup:passive\r\n");
 				content.append("a=connection:new\r\n");
 			}
-			content.append("a=downloadspeed:4\r\n");
+			content.append("a=downloadspeed:1\r\n");
 			content.append("y="+ssrc+"\r\n");//ssrc
 			content.append("f=v/MPEG-4"+"\r\n");//ssrc
 			Request request = headerProvider.createPlaybackInviteRequest(device, channelId, content.toString(), null, "Download", null);
 			ClientTransaction transaction = transmitRequest(device, request);
+			streamSession.put(ssrc, transaction);
 			System.out.println(request.toString());
-//			streamSession.put(ssrc, transaction);
 			return ssrc;
 		} catch ( SipException | ParseException | InvalidArgumentException e) {
 			e.printStackTrace();

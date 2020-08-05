@@ -14,6 +14,7 @@ import javax.sip.header.*;
 import javax.sip.message.Request;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * @Description:摄像头命令request创造器 TODO 冗余代码太多待优化
@@ -145,12 +146,11 @@ public class SIPRequestHeaderProvider {
         if (device.getTransport().equals("UDP")) {
             callIdHeader = udpSipProvider.getNewCallId();
         }
-
         //Forwards
         MaxForwardsHeader maxForwards = sipFactory.createHeaderFactory().createMaxForwardsHeader(70);
 
         //ceq
-        CSeqHeader cSeqHeader = sipFactory.createHeaderFactory().createCSeqHeader(1L, Request.INVITE);
+        CSeqHeader cSeqHeader = sipFactory.createHeaderFactory().createCSeqHeader(new Long(new Random().nextInt(10000)), Request.INVITE);
         request = sipFactory.createMessageFactory().createRequest(requestLine, Request.INVITE, callIdHeader, cSeqHeader, fromHeader, toHeader, viaHeaders, maxForwards);
 
         Address concatAddress = sipFactory.createAddressFactory().createAddress(sipFactory.createAddressFactory().createSipURI(sipConfig.getSipId(), sipConfig.getSipIp() + ":" + sipConfig.getSipPort()));

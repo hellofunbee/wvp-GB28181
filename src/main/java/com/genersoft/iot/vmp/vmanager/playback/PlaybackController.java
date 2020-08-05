@@ -26,7 +26,7 @@ public class PlaybackController {
     private IVideoManagerStorager storager;
 
     @GetMapping("/playback/{deviceId}/{channelId}")
-    public ResponseEntity<String> play(@PathVariable String deviceId, @PathVariable String channelId, String startTime, String endTime) {
+    public ResponseEntity<String> play(@PathVariable String deviceId, @PathVariable String channelId, String playbackSsrc,String startTime, String endTime) {
 
         if (logger.isDebugEnabled()) {
             logger.debug(String.format("设备回放 API调用，deviceId：%s ，channelId：%s", deviceId, channelId));
@@ -36,6 +36,11 @@ public class PlaybackController {
             String log = String.format("设备回放 API调用失败，deviceId：%s ，channelId：%s", deviceId, channelId);
             logger.warn(log);
             return new ResponseEntity<String>(log, HttpStatus.BAD_REQUEST);
+        }
+        //关闭之前的播放
+        if(!StringUtils.isEmpty(playbackSsrc)){
+            System.out.println("playbackSsrc is closed:" +playbackSsrc);
+            cmder.streamByeCmd(playbackSsrc);
         }
 
         Device device = storager.queryVideoDevice(deviceId);
@@ -120,8 +125,8 @@ public class PlaybackController {
 	}
 
     @GetMapping("/playback/{deviceId}/{channelId}/download")
-    public ResponseEntity<String> downloadBackStreamCmd(@PathVariable String deviceId, @PathVariable String channelId, String startTime, String endTime) {
-
+    public ResponseEntity<String> downloadBackStreamCmd(@PathVariable String deviceId, @PathVariable String channelId, String startTime, String endTime,String downloadSsrc) {
+        cmder.streamByeCmd(downloadSsrc);
         if (logger.isDebugEnabled()) {
             logger.debug(String.format("设备回放下载 API调用，deviceId：%s ，channelId：%s", deviceId, channelId));
         }
