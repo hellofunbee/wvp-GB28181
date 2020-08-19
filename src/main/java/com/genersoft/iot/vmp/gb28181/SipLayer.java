@@ -125,6 +125,7 @@ public class SipLayer implements SipListener {
 
 	@Override
 	public void processResponse(ResponseEvent evt) {
+		logger.warn(evt.getResponse().toString());
 		Response response = evt.getResponse();
 		int status = response.getStatusCode();
 		if ((status >= 200) && (status < 300)) { // Success!
