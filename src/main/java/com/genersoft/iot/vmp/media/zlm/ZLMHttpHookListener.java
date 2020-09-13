@@ -220,7 +220,7 @@ public class ZLMHttpHookListener {
 		if (logger.isDebugEnabled()) {
 			logger.debug("ZLM HOOK on_stream_none_reader API调用，参数：" + json.toString());
 		}
-		
+		System.out.println("************on_stream_none_reader:"+json.toJSONString());
 		BigInteger bigint=new BigInteger(json.getString("stream"), 16);
 		int numb=bigint.intValue();
 		String ssrc = String.format("%010d", numb); 

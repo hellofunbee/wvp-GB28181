@@ -10,6 +10,7 @@ import com.genersoft.iot.vmp.common.VideoManagerConstants;
 import com.genersoft.iot.vmp.gb28181.bean.Device;
 import com.genersoft.iot.vmp.storager.IVideoManagerStorager;
 import com.genersoft.iot.vmp.utils.redis.RedisUtil;
+import sun.rmi.runtime.Log;
 
 /**    
  * @Description:视频设备数据存储-redis实现  

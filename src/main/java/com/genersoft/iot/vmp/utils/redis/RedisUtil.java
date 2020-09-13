@@ -560,4 +560,13 @@ public class RedisUtil {
             return null;
         }
     }
+
+    /***
+     * 删除
+     * @param key
+     */
+    public synchronized void remove(String key){
+        redisTemplate.delete(key);
+    }
+
 }
