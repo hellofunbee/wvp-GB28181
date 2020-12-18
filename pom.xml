@@ -10,7 +10,7 @@
 	</parent>
 
 	<groupId>com.genersoft</groupId>
-	<artifactId>wvp</artifactId>
+	<artifactId>sip-server</artifactId>
 	<name>web video platform</name>
 	
 	<properties>

@@ -244,6 +244,7 @@ public class ZLMHttpHookListener {
 		if (logger.isDebugEnabled()) {
 			logger.debug("ZLM HOOK on_stream_not_found API调用，参数：" + json.toString());
 		}
+		System.out.println("************【【【【【on_stream_not_found】】】】】:"+json.toJSONString());
 		// TODO Auto-generated method stub
 		
 		JSONObject ret = new JSONObject();
